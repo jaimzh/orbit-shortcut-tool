@@ -1,0 +1,32 @@
+[
+  {
+    "icon": "home",
+    "label": "Home",
+    "keys": ["WIN", "D"]
+  },
+  {
+    "icon": "search",
+    "label": "Find",
+    "keys": ["CONTROL", "F"]
+  },
+  {
+    "icon": "copy",
+    "label": "Copy",
+    "keys": ["CONTROL", "C"]
+  },
+  {
+    "icon": "paste",
+    "label": "Paste",
+    "keys": ["CONTROL", "V"]
+  },
+  {
+    "icon": "cut",
+    "label": "Cut",
+    "keys": ["CONTROL", "X"]
+  },
+  {
+    "icon": "settings",
+    "label": "Settings",
+    "keys": ["WIN", "I"]
+  }
+]
