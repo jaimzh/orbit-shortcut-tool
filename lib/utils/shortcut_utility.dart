@@ -23,19 +23,21 @@ class ShortcutUtility {
     try {
       for (var i = 0; i < virtualKeys.length; i++) {
         final vk = virtualKeys[i];
+        final isExtended = _isExtendedKey(vk);
 
         // Key Down
         final keyDown = inputs[i];
         keyDown.type = INPUT_KEYBOARD;
         keyDown.ki.wVk = vk;
-        keyDown.ki.dwFlags = 0;
+        keyDown.ki.dwFlags = isExtended ? KEYEVENTF_EXTENDEDKEY : 0;
 
         // Key Up (LIFO for modifiers)
         final upIndex = inputCount - 1 - i;
         final keyUp = inputs[upIndex];
         keyUp.type = INPUT_KEYBOARD;
         keyUp.ki.wVk = vk;
-        keyUp.ki.dwFlags = KEYEVENTF_KEYUP;
+        keyUp.ki.dwFlags =
+            KEYEVENTF_KEYUP | (isExtended ? KEYEVENTF_EXTENDEDKEY : 0);
       }
 
       // 4. Send the input
@@ -76,5 +78,18 @@ class ShortcutUtility {
     }
 
     debugPrint("ShortcutUtility: Could not find a suitable window to focus.");
+  }
+
+  static bool _isExtendedKey(int vk) {
+    return (vk >= VK_PRIOR &&
+            vk <=
+                VK_DOWN) || // PageUp, PageDown, End, Home, Left, Up, Right, Down
+        (vk >= VK_INSERT && vk <= VK_DELETE) || // Insert, Delete
+        vk == VK_LWIN ||
+        vk == VK_RWIN ||
+        vk == VK_RMENU ||
+        vk == VK_RCONTROL ||
+        vk == VK_DIVIDE ||
+        vk == VK_NUMLOCK;
   }
 }

@@ -1,73 +1,83 @@
-# Orbit Shortcut Simulation Logic
+# Orbit: Shortcut System Architecture & Data Flow
 
-This document explains the architecture and data flow for the shortcut simulation functionality in the Orbit Shortcut Tool.
+This document outlines how data moves from a JSON file to a physical keyboard event on Windows.
 
-## 🏗 System Architecture
+## 📦 Core Technology Stack
 
-The tool is built on a layered architecture that transitions from high-level Flutter UI components to low-level Windows API calls.
-
-```mermaid
-graph TD
-    A[Orbit UI / Planet Widget] -->|User Tap| B[PlanetAction]
-    B -->|Trigger| C[ShortcutUtility]
-    C -->|FFI| D[Win32 SendInput]
-    D -->|OS Level| E[External Application]
-```
-
-## 🛠 Functional Components
-
-### 1. Data Model (`PlanetAction`)
-
-Located in `lib/models/planet_action.dart`.
-
-- **Purpose**: Defines what a shortcut _is_.
-- **Data**: Stores an icon, a label, and a list of **Virtual Key Codes** (ints).
-- **Logic**: Contains the `trigger()` method which acts as the bridge between the UI and the Windows utility.
-
-### 2. Utility Layer (`ShortcutUtility`)
-
-Located in `lib/utils/shortcut_utility.dart`.
-
-- **Purpose**: Handles the "how" of shortcut simulation.
-- **Key Methods**:
-  - `_prepareFocus()`: Searches the Windows Z-order to find the application that was active _before_ the Orbit tool was clicked. It uses `GetWindow` and `SetForegroundWindow` to pass focus back.
-  - `triggerShortcut(List<int> keys)`: The core logic that converts a list of keys into a sequence of "Key Down" and "Key Up" events.
-
-### 3. Simulation Logic (Win32 FFI)
-
-- **SendInput**: We use the Windows `SendInput` API via the `win32` and `ffi` packages.
-- **Key Sequence**: To simulate a shortcut like `Ctrl + S`:
-  1. Send `LCONTROL` Down
-  2. Send `S` Down
-  3. Send `S` Up
-  4. Send `LCONTROL` Up (LIFO order ensures modifiers wrap the primary key).
+- **`win32` & `ffi`**: Responsible for the low-level Windows API integration (simulating keystrokes and window focus).
+- **`path_provider`**: Locates the system's "Documents" folder for persistent storage.
+- **`file_picker`**: Handles the OS-native file selection dialog for the "Load" feature.
+- **`provider`**: Orchestrates state changes, ensuring the UI updates when a new config is loaded.
 
 ---
 
-## 🔄 Data Flow: The Journey of a Click
+## 🛠 Component Breakdown & Trace Guide
 
-1.  **UI Event**: User clicks a `Planet` widget in the `Orbit` menu.
-2.  **Dispatch**: The `Planet` widget calls `action.trigger()`.
-3.  **Telemetry**: `PlanetAction` logs the intent to the debug console.
-4.  **Focus Handoff**: `ShortcutUtility` looks for the most recently active visible window (excluding the Orbit tool itself) and forces it to the foreground.
-5.  **Small Wait**: A `100ms` delay is introduced to ensure Windows has finished the window transition.
-6.  **Memory Allocation**: Using `dart:ffi`, we allocate a block of memory (`calloc<INPUT>`) to hold the keyboard event data structures required by Windows.
-7.  **Input Injection**: The `SendInput` system call is executed. Windows injects these keystrokes into the input stream of the newly focused application.
-8.  **Cleanup**: The allocated memory is freed using `free()`.
+### 1. The Data Model: `PlanetAction` (`lib/models/planet_action.dart`)
+
+This is the "Translator". It takes raw JSON strings and maps them to Flutter/Windows values.
+
+- **Icon Mapping**: Converts a string like `"save"` to `Icons.save`.
+- **Key Mapping**: Converts a string like `"CTRL"` to the Windows virtual key code `VK_LCONTROL` (0x11).
+- **Trigger**: The `trigger()` method is called by the UI, which then handed off to the execution utility.
+
+### 2. The Librarian: `ShortcutManager` (`lib/utils/shortcut_manager.dart`)
+
+Handles all File I/O operations.
+
+- **Storage**: Manages `shortcuts.json` in `Documents/OrbitShortcuts/`.
+- **Default Config**: The `_createDefaultConfig` method contains the hardcoded "first-run" settings.
+- **Importing**: Uses `file_picker` to read an external JSON, validates it via `jsonDecode`, and overwrites the local working config.
+
+### 3. The Brain: `UISettingsProvider` (`lib/providers/ui_settings_provider.dart`)
+
+The central hub for app state.
+
+- **`actions` List**: Holds the active list of `PlanetAction` objects.
+- **`loadShortcuts()`**: The "Reload" logic. It tells the Librarian to read the file and then calls `notifyListeners()` to redraw the UI.
+- **`importShortcuts()`**: The "Load" logic. Coordinates the file picker and the subsequent UI refresh.
+
+### 4. The Executor: `ShortcutUtility` (`lib/utils/shortcut_utility.dart`)
+
+Where the "magic" happens. This class has no state; it only performs actions.
+
+- **`_prepareFocus()`**: Uses `GetForegroundWindow` and `SetForegroundWindow` from `win32` to find the app you were using _before_ you clicked the Orbit and switches focus back to it.
+- **`triggerShortcut()`**:
+  1. Distinguishes between normal and "Extended" keys (like WIN or Arrows).
+  2. Builds a C-style array of `INPUT` structures using `ffi`.
+  3. Calls `SendInput` to inject the keystrokes into the Windows input stream.
 
 ---
 
-## ⌨️ Virtual Key Codes
+## 🔄 Data Lifecycle (Step-by-Step)
 
-The tool uses standard Windows Virtual-Key Codes. Common ones used:
+1. **Initialization**:
+   - `main.dart` starts `UISettingsProvider`.
+   - Provider calls `ShortcutManager.loadShortcuts()`.
+   - Librarian checks if `Documents/OrbitShortcuts/shortcuts.json` exists. If not, it writes the defaults.
+   - Provider notifies the UI; the `Orbit` widget builds `Planet` widgets for each item.
 
-- `VK_LCONTROL` (0xA2): Left Control
-- `0x53`: 'S' Key
-- `0x5A`: 'Z' Key
-- `VK_OEM_4` (0xDB): `[` Key
-- `VK_OEM_6` (0xDD): `]` Key
+2. **Triggering a Shortcut**:
+   - User clicks a **Planet**.
+   - `Planet` widget calls `action.trigger()`.
+   - `PlanetAction` calls `ShortcutUtility.triggerShortcut(virtualKeys)`.
+   - `ShortcutUtility` minimizes the "stolen focus" by switching back to your previous app.
+   - `ShortcutUtility` sends the key-down and key-up signals to Windows.
 
-## ⚠️ Important Considerations
+3. **Loading a New Config**:
+   - User selects **Load** from the context menu.
+   - `UISettingsProvider` calls `ShortcutManager.importFromFile()`.
+   - Librarian opens the `file_picker`.
+   - New content is saved to the local `shortcuts.json`.
+   - Provider calls `loadShortcuts()` to refresh the internal list and the UI.
 
-- **Admin Privileges**: If the target application (e.g., Task Manager) is running as Administrator, the Orbit tool must also run as Administrator to send inputs to it (Windows Security restriction).
-- **Transparency**: The tool uses `window_manager` to remain "Always on Top" but intentionally yields focus immediately when a shortcut is triggered.
+---
+
+## 🔍 Code Tracing Tips
+
+If you want to follow the data "hot path":
+
+1. Start at `lib/widgets/orbit.dart` inside the `Planet` class's `onTapUp`.
+2. Step into `widget.action.trigger()` in `lib/models/planet_action.dart`.
+3. Step into `ShortcutUtility.triggerShortcut()` in `lib/utils/shortcut_utility.dart`.
+4. Observe the `debugPrint` statements in your terminal to see the inputs being sent.

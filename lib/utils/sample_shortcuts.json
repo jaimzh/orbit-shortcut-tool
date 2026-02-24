@@ -5,11 +5,6 @@
     "keys": ["WIN", "D"]
   },
   {
-    "icon": "search",
-    "label": "Find",
-    "keys": ["CONTROL", "F"]
-  },
-  {
     "icon": "copy",
     "label": "Copy",
     "keys": ["CONTROL", "C"]

@@ -95,6 +95,7 @@ class _OrbitState extends State<Orbit> with SingleTickerProviderStateMixin {
 
           // Center Orbit Orb (The trigger button)
           MouseRegion(
+            cursor: SystemMouseCursors.click,
             onEnter: (_) => setState(() => isOrbHovering = true),
             onExit: (_) => setState(() => isOrbHovering = false),
             child: GestureDetector(
@@ -136,7 +137,7 @@ class _OrbitState extends State<Orbit> with SingleTickerProviderStateMixin {
                 ),
                 child: Center(
                   child: Icon(
-                    Icons.public,
+                    Icons.radio_button_checked,
                     color: primaryColor.withValues(
                       alpha: isOrbHovering ? 1.0 : 0.8,
                     ),
@@ -217,6 +218,7 @@ class _PlanetState extends State<Planet> {
     final double currentIconSize = widget.iconSize * scale;
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) {
         setState(() => isHovering = true);
         _startHoverTimer();
