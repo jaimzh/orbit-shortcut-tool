@@ -1,0 +1,5 @@
+- [ ] Add a prompt preset so user can copy and paste that prompt preset and it can have all the details on eh shorcut json logic, so alluser has to do is copy and past and then describe wrokflow or shortcuts to be added and the AI will generate the json file for them.
+- [ ] Add a radial limit 
+- [ ] Create different ui layout presets. (horizontal, vertical, radial, sticker, grid)
+- [ ] proper backend with a lowlevel language that is not flutter, maybe rust or c++.
+- [ ] build a simple single landing page in nextjs for downloads and info.
