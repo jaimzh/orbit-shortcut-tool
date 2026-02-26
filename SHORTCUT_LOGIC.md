@@ -2,7 +2,7 @@
 
 This document outlines how data moves from a JSON file to a physical keyboard event on Windows.
 
-## 📦 Core Technology Stack
+##  Core Technology Stack
 
 - **`win32` & `ffi`**: Responsible for the low-level Windows API integration (simulating keystrokes and window focus).
 - **`path_provider`**: Locates the system's "Documents" folder for persistent storage.
@@ -11,7 +11,7 @@ This document outlines how data moves from a JSON file to a physical keyboard ev
 
 ---
 
-## 🛠 Component Breakdown & Trace Guide
+##  Component Breakdown & Trace Guide
 
 ### 1. The Data Model: `PlanetAction` (`lib/models/planet_action.dart`)
 
@@ -49,7 +49,7 @@ Where the "magic" happens. This class has no state; it only performs actions.
 
 ---
 
-## 🔄 Data Lifecycle (Step-by-Step)
+## Data Lifecycle (Step-by-Step)
 
 1. **Initialization**:
    - `main.dart` starts `UISettingsProvider`.
@@ -73,7 +73,7 @@ Where the "magic" happens. This class has no state; it only performs actions.
 
 ---
 
-## 🔍 Code Tracing Tips
+##  Code Tracing Tips
 
 If you want to follow the data "hot path":
 
