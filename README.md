@@ -6,15 +6,7 @@ Orbit is a minimal, floating keyboard shortcut tool for Windows designed to stre
   <img src="assets/preview.png" alt="Orbit Preview" width="200">
 </p>
 
-<p align="center">
-  <video src="assets/demo.mp4" width="600" autoplay loop muted />
-</p>
 
-
-
-![alt text](assets/preview.png)
-
-![alt text](assets/demo.mp4)
 ## Key Features
 
 - **Floating UI**: A semi-transparent, frameless window that stays on top of your work.
