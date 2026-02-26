@@ -2,9 +2,9 @@
 
 Orbit is a minimal, floating keyboard shortcut tool for Windows designed to streamline your workflow. It provides a quick-access "radial menu" of your most-used keyboard shortcuts, keeping your workspace clean while keeping your tools just one click away.
 
-<!-- <p align="center">
+<p align="center">
   <img src="assets/preview.png" alt="Orbit Preview" width="400">
-</p> -->
+</p>
 
 <p align="center">
   <video src="assets/demo.mp4" width="600" autoplay loop muted />
